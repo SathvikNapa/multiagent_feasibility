@@ -1,0 +1,8 @@
+model,bitvector_recall_runs,bypass_attempts,attempt_rate
+qwen3p5-4b,24,3,0.125
+phi4-mini,24,3,0.125
+qwen3p5-9b,24,3,0.125
+mistral-7b,24,3,0.125
+qwen25coder-7b,24,2,0.083
+granite-8b,24,1,0.042
+qwen38-27b,24,0,0.0

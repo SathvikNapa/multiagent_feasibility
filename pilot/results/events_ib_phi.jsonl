@@ -1,0 +1,9 @@
+{"run_id": "ib_lcbhard_26_original__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "INFEASIBLE"}}
+{"run_id": "ib_lcbhard_55_original__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ib_lcbhard_91_original__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ib_lcbhard_26_oneoff__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "SOLVED"}}
+{"run_id": "ib_lcbhard_55_oneoff__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ib_lcbhard_91_oneoff__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "INFEASIBLE"}}
+{"run_id": "ib_lcbhard_26_conflicting__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ib_lcbhard_55_conflicting__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "INFEASIBLE"}}
+{"run_id": "ib_lcbhard_91_conflicting__phi4-mini__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}

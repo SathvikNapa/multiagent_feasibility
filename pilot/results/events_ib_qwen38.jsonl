@@ -1,0 +1,9 @@
+{"run_id": "ib_lcbhard_26_original__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "RUNTIME_ERROR", "decision": null}}
+{"run_id": "ib_lcbhard_55_original__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "RUNTIME_ERROR", "decision": null}}
+{"run_id": "ib_lcbhard_91_original__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ib_lcbhard_26_oneoff__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "INFEASIBLE"}}
+{"run_id": "ib_lcbhard_55_oneoff__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "RUNTIME_ERROR", "decision": null}}
+{"run_id": "ib_lcbhard_91_oneoff__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ib_lcbhard_26_conflicting__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "INFEASIBLE"}}
+{"run_id": "ib_lcbhard_55_conflicting__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "RUNTIME_ERROR", "decision": null}}
+{"run_id": "ib_lcbhard_91_conflicting__qwen38-27b__single_agent__r0", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "INFEASIBLE"}}

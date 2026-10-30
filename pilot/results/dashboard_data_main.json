@@ -1,0 +1,670 @@
+{
+ "by_model": [
+  {
+   "model_name": "phi4-mini",
+   "n": 96,
+   "valid": 0.0520833333,
+   "false_succ": 0.0833333333,
+   "infeas": 0.8645833333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "n": 96,
+   "valid": 0.3854166667,
+   "false_succ": 0.4479166667,
+   "infeas": 0.0833333333,
+   "unknown": 0.0833333333
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "n": 96,
+   "valid": 0.4166666667,
+   "false_succ": 0.15625,
+   "infeas": 0.4270833333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "n": 96,
+   "valid": 0.3854166667,
+   "false_succ": 0.15625,
+   "infeas": 0.4583333333,
+   "unknown": 0.0
+  }
+ ],
+ "by_model_category": [
+  {
+   "model_name": "phi4-mini",
+   "category": "F1",
+   "n": 32,
+   "valid": 0.15625,
+   "false_succ": 0.21875,
+   "infeas": 0.625,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "category": "F2",
+   "n": 32,
+   "valid": 0.0,
+   "false_succ": 0.0,
+   "infeas": 1.0,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "category": "F3",
+   "n": 32,
+   "valid": 0.0,
+   "false_succ": 0.03125,
+   "infeas": 0.96875,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "category": "F1",
+   "n": 32,
+   "valid": 0.5625,
+   "false_succ": 0.4375,
+   "infeas": 0.0,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "category": "F2",
+   "n": 32,
+   "valid": 0.59375,
+   "false_succ": 0.375,
+   "infeas": 0.03125,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "category": "F3",
+   "n": 32,
+   "valid": 0.0,
+   "false_succ": 0.53125,
+   "infeas": 0.21875,
+   "unknown": 0.25
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "category": "F1",
+   "n": 32,
+   "valid": 0.6875,
+   "false_succ": 0.125,
+   "infeas": 0.1875,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "category": "F2",
+   "n": 32,
+   "valid": 0.5625,
+   "false_succ": 0.21875,
+   "infeas": 0.21875,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "category": "F3",
+   "n": 32,
+   "valid": 0.0,
+   "false_succ": 0.125,
+   "infeas": 0.875,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "category": "F1",
+   "n": 32,
+   "valid": 0.71875,
+   "false_succ": 0.21875,
+   "infeas": 0.0625,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "category": "F2",
+   "n": 32,
+   "valid": 0.40625,
+   "false_succ": 0.21875,
+   "infeas": 0.375,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "category": "F3",
+   "n": 32,
+   "valid": 0.03125,
+   "false_succ": 0.03125,
+   "infeas": 0.9375,
+   "unknown": 0.0
+  }
+ ],
+ "by_model_type": [
+  {
+   "model_name": "phi4-mini",
+   "constraint_type": "C1",
+   "n": 24,
+   "valid": 0.0,
+   "false_succ": 0.0416666667,
+   "infeas": 0.9583333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "constraint_type": "C2",
+   "n": 24,
+   "valid": 0.0,
+   "false_succ": 0.2083333333,
+   "infeas": 0.7916666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "constraint_type": "C3",
+   "n": 24,
+   "valid": 0.2083333333,
+   "false_succ": 0.0833333333,
+   "infeas": 0.7083333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "constraint_type": "C4",
+   "n": 24,
+   "valid": 0.0,
+   "false_succ": 0.0,
+   "infeas": 1.0,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "constraint_type": "C1",
+   "n": 24,
+   "valid": 0.125,
+   "false_succ": 0.875,
+   "infeas": 0.0,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "constraint_type": "C2",
+   "n": 24,
+   "valid": 0.625,
+   "false_succ": 0.0,
+   "infeas": 0.2916666667,
+   "unknown": 0.0833333333
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "constraint_type": "C3",
+   "n": 24,
+   "valid": 0.125,
+   "false_succ": 0.875,
+   "infeas": 0.0,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "constraint_type": "C4",
+   "n": 24,
+   "valid": 0.6666666667,
+   "false_succ": 0.0416666667,
+   "infeas": 0.0416666667,
+   "unknown": 0.25
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "constraint_type": "C1",
+   "n": 24,
+   "valid": 0.4583333333,
+   "false_succ": 0.3333333333,
+   "infeas": 0.2083333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "constraint_type": "C2",
+   "n": 24,
+   "valid": 0.2916666667,
+   "false_succ": 0.125,
+   "infeas": 0.5833333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "constraint_type": "C3",
+   "n": 24,
+   "valid": 0.3333333333,
+   "false_succ": 0.1666666667,
+   "infeas": 0.5,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "constraint_type": "C4",
+   "n": 24,
+   "valid": 0.5833333333,
+   "false_succ": 0.0,
+   "infeas": 0.4166666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "constraint_type": "C1",
+   "n": 24,
+   "valid": 0.4583333333,
+   "false_succ": 0.0833333333,
+   "infeas": 0.4583333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "constraint_type": "C2",
+   "n": 24,
+   "valid": 0.2916666667,
+   "false_succ": 0.0,
+   "infeas": 0.7083333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "constraint_type": "C3",
+   "n": 24,
+   "valid": 0.125,
+   "false_succ": 0.5416666667,
+   "infeas": 0.3333333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "constraint_type": "C4",
+   "n": 24,
+   "valid": 0.6666666667,
+   "false_succ": 0.0,
+   "infeas": 0.3333333333,
+   "unknown": 0.0
+  }
+ ],
+ "by_model_arch": [
+  {
+   "model_name": "phi4-mini",
+   "architecture": "comm_chain",
+   "n": 12,
+   "valid": 0.0833333333,
+   "false_succ": 0.0,
+   "infeas": 0.9166666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "architecture": "comm_fully_connected",
+   "n": 12,
+   "valid": 0.0,
+   "false_succ": 0.1666666667,
+   "infeas": 0.8333333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "architecture": "comm_independent",
+   "n": 12,
+   "valid": 0.0833333333,
+   "false_succ": 0.0,
+   "infeas": 0.9166666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "architecture": "comm_star",
+   "n": 12,
+   "valid": 0.0,
+   "false_succ": 0.1666666667,
+   "infeas": 0.8333333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "architecture": "single_agent",
+   "n": 24,
+   "valid": 0.0416666667,
+   "false_succ": 0.0833333333,
+   "infeas": 0.875,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "phi4-mini",
+   "architecture": "team4_aggregator",
+   "n": 24,
+   "valid": 0.0833333333,
+   "false_succ": 0.0833333333,
+   "infeas": 0.8333333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "architecture": "comm_chain",
+   "n": 12,
+   "valid": 0.25,
+   "false_succ": 0.5,
+   "infeas": 0.25,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "architecture": "comm_fully_connected",
+   "n": 12,
+   "valid": 0.3333333333,
+   "false_succ": 0.5,
+   "infeas": 0.0833333333,
+   "unknown": 0.0833333333
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "architecture": "comm_independent",
+   "n": 12,
+   "valid": 0.4166666667,
+   "false_succ": 0.4166666667,
+   "infeas": 0.0833333333,
+   "unknown": 0.0833333333
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "architecture": "comm_star",
+   "n": 12,
+   "valid": 0.4166666667,
+   "false_succ": 0.4166666667,
+   "infeas": 0.0833333333,
+   "unknown": 0.0833333333
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "architecture": "single_agent",
+   "n": 24,
+   "valid": 0.4583333333,
+   "false_succ": 0.4166666667,
+   "infeas": 0.0416666667,
+   "unknown": 0.0833333333
+  },
+  {
+   "model_name": "qwen25coder-7b",
+   "architecture": "team4_aggregator",
+   "n": 24,
+   "valid": 0.375,
+   "false_succ": 0.4583333333,
+   "infeas": 0.0416666667,
+   "unknown": 0.125
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "architecture": "comm_chain",
+   "n": 12,
+   "valid": 0.4166666667,
+   "false_succ": 0.1666666667,
+   "infeas": 0.4166666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "architecture": "comm_fully_connected",
+   "n": 12,
+   "valid": 0.5833333333,
+   "false_succ": 0.0,
+   "infeas": 0.4166666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "architecture": "comm_independent",
+   "n": 12,
+   "valid": 0.3333333333,
+   "false_succ": 0.1666666667,
+   "infeas": 0.5,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "architecture": "comm_star",
+   "n": 12,
+   "valid": 0.25,
+   "false_succ": 0.25,
+   "infeas": 0.5,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "architecture": "single_agent",
+   "n": 24,
+   "valid": 0.5,
+   "false_succ": 0.0833333333,
+   "infeas": 0.4166666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-4b",
+   "architecture": "team4_aggregator",
+   "n": 24,
+   "valid": 0.375,
+   "false_succ": 0.25,
+   "infeas": 0.375,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "architecture": "comm_chain",
+   "n": 12,
+   "valid": 0.3333333333,
+   "false_succ": 0.1666666667,
+   "infeas": 0.5,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "architecture": "comm_fully_connected",
+   "n": 12,
+   "valid": 0.3333333333,
+   "false_succ": 0.1666666667,
+   "infeas": 0.5,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "architecture": "comm_independent",
+   "n": 12,
+   "valid": 0.4166666667,
+   "false_succ": 0.1666666667,
+   "infeas": 0.4166666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "architecture": "comm_star",
+   "n": 12,
+   "valid": 0.4166666667,
+   "false_succ": 0.1666666667,
+   "infeas": 0.4166666667,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "architecture": "single_agent",
+   "n": 24,
+   "valid": 0.4166666667,
+   "false_succ": 0.125,
+   "infeas": 0.4583333333,
+   "unknown": 0.0
+  },
+  {
+   "model_name": "qwen3p5-9b",
+   "architecture": "team4_aggregator",
+   "n": 24,
+   "valid": 0.375,
+   "false_succ": 0.1666666667,
+   "infeas": 0.4583333333,
+   "unknown": 0.0
+  }
+ ],
+ "by_type_category": [
+  {
+   "constraint_type": "C1",
+   "category": "F1",
+   "n": 32,
+   "valid": 0.53125,
+   "false_succ": 0.1875,
+   "infeas": 0.28125,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C1",
+   "category": "F2",
+   "n": 32,
+   "valid": 0.25,
+   "false_succ": 0.40625,
+   "infeas": 0.34375,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C1",
+   "category": "F3",
+   "n": 32,
+   "valid": 0.0,
+   "false_succ": 0.40625,
+   "infeas": 0.59375,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C2",
+   "category": "F1",
+   "n": 32,
+   "valid": 0.625,
+   "false_succ": 0.25,
+   "infeas": 0.125,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C2",
+   "category": "F2",
+   "n": 32,
+   "valid": 0.28125,
+   "false_succ": 0.0,
+   "infeas": 0.71875,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C2",
+   "category": "F3",
+   "n": 32,
+   "valid": 0.0,
+   "false_succ": 0.0,
+   "infeas": 0.9375,
+   "unknown": 0.0625
+  },
+  {
+   "constraint_type": "C3",
+   "category": "F1",
+   "n": 32,
+   "valid": 0.25,
+   "false_succ": 0.5625,
+   "infeas": 0.1875,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C3",
+   "category": "F2",
+   "n": 32,
+   "valid": 0.3125,
+   "false_succ": 0.40625,
+   "infeas": 0.28125,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C3",
+   "category": "F3",
+   "n": 32,
+   "valid": 0.03125,
+   "false_succ": 0.28125,
+   "infeas": 0.6875,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C4",
+   "category": "F1",
+   "n": 32,
+   "valid": 0.71875,
+   "false_succ": 0.0,
+   "infeas": 0.28125,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C4",
+   "category": "F2",
+   "n": 32,
+   "valid": 0.71875,
+   "false_succ": 0.0,
+   "infeas": 0.28125,
+   "unknown": 0.0
+  },
+  {
+   "constraint_type": "C4",
+   "category": "F3",
+   "n": 32,
+   "valid": 0.0,
+   "false_succ": 0.03125,
+   "infeas": 0.78125,
+   "unknown": 0.1875
+  }
+ ],
+ "by_arch": [
+  {
+   "architecture": "comm_chain",
+   "n": 48,
+   "valid": 0.2708333333,
+   "false_succ": 0.2083333333,
+   "infeas": 0.5208333333,
+   "unknown": 0.0
+  },
+  {
+   "architecture": "comm_fully_connected",
+   "n": 48,
+   "valid": 0.3125,
+   "false_succ": 0.2083333333,
+   "infeas": 0.4583333333,
+   "unknown": 0.0208333333
+  },
+  {
+   "architecture": "comm_independent",
+   "n": 48,
+   "valid": 0.3125,
+   "false_succ": 0.1875,
+   "infeas": 0.4791666667,
+   "unknown": 0.0208333333
+  },
+  {
+   "architecture": "comm_star",
+   "n": 48,
+   "valid": 0.2708333333,
+   "false_succ": 0.25,
+   "infeas": 0.4583333333,
+   "unknown": 0.0208333333
+  },
+  {
+   "architecture": "single_agent",
+   "n": 96,
+   "valid": 0.3541666667,
+   "false_succ": 0.1770833333,
+   "infeas": 0.4479166667,
+   "unknown": 0.0208333333
+  },
+  {
+   "architecture": "team4_aggregator",
+   "n": 96,
+   "valid": 0.3020833333,
+   "false_succ": 0.2395833333,
+   "infeas": 0.4270833333,
+   "unknown": 0.03125
+  }
+ ]
+}

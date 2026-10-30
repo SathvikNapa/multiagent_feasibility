@@ -1,0 +1,3 @@
+{"run_id": "adj_swap_sort_F1__qwen3p5-4b__team4_aggregator__r0", "kind": "termination", "payload": {"verdict": "EXECUTION_FAILURE", "decision": "SOLVED"}}
+{"run_id": "adj_swap_sort_F2__qwen3p5-4b__team4_aggregator__r0", "kind": "termination", "payload": {"verdict": "PASS", "decision": "SOLVED"}}
+{"run_id": "adj_swap_sort_F3__qwen3p5-4b__team4_aggregator__r0", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "INFEASIBLE"}}

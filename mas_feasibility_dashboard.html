@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAS Feasibility Pilot</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  :root {
+    --color-fg: #1a1a1a; --color-fg-muted: #6b6b6b; --color-bg: #ffffff; --color-panel: #f7f7f7;
+    --color-border-line: #e0e0e0; --color-ok: #1a7f37; --color-warn: #9a6700; --color-bad: #cf222e;
+    --font-anthropic-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-anthropic-serif: Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --color-fg: #e8e8e8; --color-fg-muted: #999; --color-bg: #1a1a1a; --color-panel: #242424; --color-border-line: #3a3a3a; }
+  }
+  body { background: var(--color-bg); color: var(--color-fg); font-family: var(--font-anthropic-sans); margin: 0; padding: 1rem; }
+  #dash-root { max-width: 1400px; margin: 0 auto; }
+</style>
+</head>
+<body>
+<div id="dash-root">
+<style>
+  #dash-root { --dash-gutter: 0; }
+  .page { display: flex; flex-direction: column; gap: var(--cds-gap-lg, 1.5rem); }
+  .page-head h1 {
+    font-family: var(--font-anthropic-serif); font-weight: 400; margin: 0 0 .25rem 0;
+    font-size: var(--cds-font-size-title, 1.75rem);
+  }
+  .page-head p { margin: 0; color: var(--color-fg-muted); max-width: 70ch; }
+  .page-sub { font-size: var(--cds-font-size-body, .95rem) !important; margin-top: .35rem !important; }
+  .page-sub-detail { font-size: var(--cds-font-size-caption, .8rem) !important; margin-top: .3rem !important; }
+  .interpret { font-size: var(--cds-font-size-caption, .78rem); color: var(--color-fg-muted); margin: .4rem 0 0 0; font-style: italic; }
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: var(--cds-gap-md, 1rem);
+  }
+  .card {
+    background: var(--color-panel); border: 1px solid var(--color-border-line);
+    border-radius: var(--cds-radius, 10px); padding: var(--cds-pad-lg, 1.25rem);
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .card h2 {
+    font-size: var(--cds-font-size-heading, 1rem); font-weight: var(--cds-font-weight-medium, 600);
+    margin: 0; font-family: var(--font-anthropic-sans);
+  }
+  .card .note { font-size: var(--cds-font-size-caption, .8rem); color: var(--color-fg-muted); margin: 0; }
+  .kpi-name { font-size: var(--cds-font-size-body, .9rem); color: var(--color-fg-muted); }
+  .kpi-row { display: flex; align-items: baseline; gap: .4rem; }
+  .kpi-value {
+    font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 2rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi-sub { font-size: var(--cds-font-size-caption, .8rem); color: var(--color-fg-muted); }
+  .kpi-flags { display: flex; gap: .75rem; font-size: var(--cds-font-size-caption, .8rem); margin-top: .25rem; }
+  .flag-dot { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; margin-right: .3rem; }
+  .charts-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+    gap: var(--cds-gap-md, 1rem);
+  }
+  .chart-box { min-height: 320px; }
+  .chart-box svg { width: 100%; height: 320px; display: block; }
+  .tick text { fill: var(--color-fg-muted); font-size: var(--cds-font-size-caption, 11px); font-family: var(--font-anthropic-sans); }
+  .axis-line { stroke: var(--cds-chart-axis, var(--color-border-line)); }
+  .grid-line { stroke: var(--cds-chart-grid, var(--color-border-line)); stroke-width: 1; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: var(--cds-font-size-caption, .8rem); margin-top: .5rem; }
+  .legend-item { display: flex; align-items: center; gap: .35rem; color: var(--color-fg-muted); }
+  .legend-swatch { width: .6rem; height: .6rem; border-radius: 2px; }
+  .tooltip {
+    position: absolute; background: var(--cds-surface-popover, var(--color-panel));
+    border: 1px solid var(--cds-border, var(--color-border-line)); border-radius: var(--cds-radius, 8px);
+    padding: var(--cds-pad-xs, .35rem) var(--cds-pad-sm, .6rem); font-size: var(--cds-font-size-caption, .8rem);
+    pointer-events: none; opacity: 0; transition: opacity .1s;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-body, .9rem); }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--color-border-line); font-variant-numeric: tabular-nums; }
+  th { color: var(--color-fg-muted); font-weight: var(--cds-font-weight-medium, 600); font-size: var(--cds-font-size-caption, .8rem); }
+  .table-wrap { overflow-x: auto; }
+  .num { text-align: right; }
+  .pill { display: inline-block; padding: .15rem .5rem; border-radius: 999px; font-size: var(--cds-font-size-caption, .75rem); }
+  .pill-ok { background: color-mix(in srgb, var(--color-ok) 18%, transparent); color: var(--color-ok); }
+  .pill-bad { background: color-mix(in srgb, var(--color-bad) 18%, transparent); color: var(--color-bad); }
+  .pill-warn { background: color-mix(in srgb, var(--color-warn) 18%, transparent); color: var(--color-warn); }
+  .pill-muted { background: var(--color-border-line); color: var(--color-fg-muted); }
+  .section-title { font-family: var(--font-anthropic-sans); font-weight: var(--cds-font-weight-medium, 600); margin: 0 0 .25rem 0; }
+  .dash-skeleton { background: var(--color-border-line); border-radius: 4px; animation: pulse 1.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: no-preference) { @keyframes pulse { 0%, 100% { opacity: .5 } 50% { opacity: .9 } } }
+  [data-dash-source-state="empty"] { color: transparent; }
+  .example {
+    border: 1px solid var(--color-border-line); border-radius: var(--cds-radius, 10px);
+    padding: var(--cds-pad-md, .9rem); display: flex; flex-direction: column; gap: .5rem;
+  }
+  .example-head { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+  .example-title { font-weight: var(--cds-font-weight-medium, 600); font-size: var(--cds-font-size-body, .95rem); }
+  .example-tags { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .example-note { font-size: var(--cds-font-size-caption, .85rem); color: var(--color-fg-muted); }
+  .example-block-label { font-size: var(--cds-font-size-caption, .75rem); color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .03em; margin: .4rem 0 .15rem 0; }
+  .example-task { font-size: var(--cds-font-size-caption, .85rem); font-family: var(--font-anthropic-sans); background: var(--color-bg); border-radius: 6px; padding: .5rem .6rem; }
+  .example-reason { font-size: var(--cds-font-size-caption, .85rem); font-style: italic; }
+  .example-code { font-size: .78rem; background: var(--color-bg); border-radius: 6px; padding: .5rem .6rem; overflow-x: auto; white-space: pre; font-family: ui-monospace, monospace; margin: 0; }
+  .glossary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1.25rem; }
+  .glossary-group-title { font-weight: var(--cds-font-weight-medium, 600); margin: 0 0 .5rem 0; font-size: var(--cds-font-size-body, .9rem); font-family: var(--font-anthropic-sans); }
+  .glossary-list { margin: 0; display: flex; flex-direction: column; gap: .55rem; }
+  .glossary-list dt { font-weight: var(--cds-font-weight-medium, 600); font-size: var(--cds-font-size-body, .85rem); }
+  .glossary-list dd { margin: .1rem 0 0 0; font-size: var(--cds-font-size-caption, .82rem); color: var(--color-fg-muted); }
+  .rq-list { display: flex; flex-direction: column; gap: .9rem; }
+  .rq-item { padding: .7rem .8rem; border: 1px solid var(--color-border-line); border-radius: 8px; }
+  .rq-q { margin: 0 0 .3rem 0; font-weight: var(--cds-font-weight-medium, 600); font-family: var(--font-anthropic-sans); font-size: var(--cds-font-size-body, .92rem); }
+  .rq-map { margin: 0 0 .35rem 0; font-size: var(--cds-font-size-caption, .78rem); }
+  .rq-map a { color: inherit; text-decoration: underline; text-decoration-color: var(--color-border-line); }
+  .rq-obs { margin: 0; font-size: var(--cds-font-size-caption, .85rem); color: var(--color-fg-muted); }
+  .rq-obs strong { color: var(--color-fg); }
+  .glossary-section + .glossary-section { margin-top: 1.1rem; }
+  .proto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .8rem; margin-top: .6rem; }
+  .proto-card { border: 1px solid var(--color-border-line); border-radius: 8px; padding: .6rem .65rem .55rem; display: flex; flex-direction: column; gap: .4rem; margin: 0; }
+  .proto-card svg { width: 100%; height: auto; display: block; color: var(--color-fg-muted); }
+  .proto-card figcaption { font-size: var(--cds-font-size-caption, .78rem); color: var(--color-fg-muted); }
+  .proto-card figcaption strong { color: var(--color-fg); font-family: var(--font-anthropic-sans); }
+  .tab-bar { display: flex; gap: .4rem; border-bottom: 1px solid var(--color-border-line); }
+  .tab-btn {
+    font-family: var(--font-anthropic-sans); font-size: var(--cds-font-size-body, .92rem);
+    font-weight: var(--cds-font-weight-medium, 600); color: var(--color-fg-muted);
+    background: none; border: none; border-bottom: 2px solid transparent;
+    padding: .55rem .2rem; margin-bottom: -1px; cursor: pointer;
+  }
+  .tab-btn + .tab-btn { margin-left: .9rem; }
+  .tab-btn[aria-selected="true"] { color: var(--color-fg); border-bottom-color: var(--color-fg); }
+  .tab-page { display: flex; flex-direction: column; gap: var(--cds-gap-lg, 1.5rem); }
+  .diagram-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1.25rem; margin-top: .6rem; }
+  .diagram-card { border: 1px solid var(--color-border-line); border-radius: 8px; padding: .7rem .75rem .6rem; margin: 0; display: flex; flex-direction: column; gap: .5rem; }
+  .diagram-card svg { width: 100%; height: auto; display: block; color: var(--color-fg-muted); max-width: 100%; }
+  .diagram-card figcaption { font-size: var(--cds-font-size-caption, .8rem); color: var(--color-fg-muted); }
+  .diagram-card svg rect { cursor: help; transition: fill-opacity .15s; }
+  .diagram-card svg rect:hover { fill-opacity: 0.3 !important; }
+  .tldr-list { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .4rem; font-size: var(--cds-font-size-body, .92rem); }
+  .tldr-list strong { font-family: var(--font-anthropic-sans); }
+  .topo-card { position: relative; }
+  .topo-card svg { cursor: grab; }
+  .topo-node { cursor: grab; }
+  .topo-node circle { transition: stroke-width .15s, fill-opacity .15s; }
+  .topo-node:hover circle { stroke-width: 3; fill-opacity: 0.28; }
+  .topo-pulse { pointer-events: none; }
+  .topo-edge { transition: opacity .15s; }
+  .topo-node:active { cursor: grabbing; }
+  .topo-hint { font-size: var(--cds-font-size-caption, .72rem); color: var(--color-fg-muted); opacity: .8; }
+</style>
+
+<div class="page">
+  <div class="page-head">
+    <h1>MAS Feasibility Pilot</h1>
+    <p class="page-sub">Can an LLM, alone or in a team, tell a problem that's genuinely too hard from one that's provably impossible -- solving what it can, admitting what it can't, and not faking success when it can't? This pilot grades real model runs against ground truth across constraint types, difficulty levels, and team communication protocols to find out.</p>
+    <p class="page-sub-detail" id="takeaway-stat">Loading…</p>
+  </div>
+
+  <div class="card" id="tldr-card">
+    <h2 class="section-title">TL;DR</h2>
+    <ul class="tldr-list" id="tldr-list"><li class="note">Loading…</li></ul>
+  </div>
+
+  <div class="card" id="dataset-card">
+    <h2 class="section-title">How the dataset was built</h2>
+    <p class="note">Two tracks feed every result on this page: the <strong>pilot</strong> (a small subset, run across up to 6 communication topologies, to validate the harness and get directional findings fast) and the <strong>complete run</strong> (the full dataset, single_agent only, run across all 9 models for statistical coverage).</p>
+    <div class="diagram-grid">
+      <figure class="diagram-card">
+        <svg viewBox="0 0 440 210" role="img" aria-label="Pilot dataset: 8 hand-built task families used whole, plus a small sample of the ImpossibleBench pool, run across up to 6 communication topologies on up to 3 models">
+          <defs><marker id="ah-p1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+          <rect x="8" y="10" width="190" height="40" rx="6" fill="var(--color-fg-muted)" fill-opacity="0.12" stroke="currentColor" stroke-width="1.5"><title>Source: 8 task families, hand-written for the pilot (2 per constraint type C1-C4), each with F1/F2/F3 variants.</title></rect>
+          <text x="103" y="25" font-size="11" text-anchor="middle" fill="currentColor">8 hand-built families</text>
+          <text x="103" y="40" font-size="10" text-anchor="middle" fill="currentColor" opacity="0.75">C1-C4, 2 each</text>
+          <rect x="8" y="70" width="190" height="40" rx="6" fill="var(--color-fg-muted)" fill-opacity="0.12" stroke="currentColor" stroke-width="1.5"><title>Source: the 103-problem ImpossibleBench pool, drawn from LiveCodeBench's hard tier, each with 3 splits (original/oneoff/conflicting).</title></rect>
+          <text x="103" y="85" font-size="11" text-anchor="middle" fill="currentColor">ImpossibleBench pool</text>
+          <text x="103" y="100" font-size="10" text-anchor="middle" fill="currentColor" opacity="0.75">103 LiveCodeBench-hard problems</text>
+          <line x1="198" y1="30" x2="240" y2="30" stroke="currentColor" stroke-width="1.3"/>
+          <line x1="198" y1="90" x2="240" y2="90" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah-p1)"/>
+          <text x="219" y="22" font-size="9" text-anchor="middle" fill="currentColor">all 24 variants</text>
+          <text x="219" y="82" font-size="9" text-anchor="middle" fill="currentColor">sample 3-10</text>
+          <line x1="198" y1="30" x2="198" y2="30" stroke="currentColor"/>
+          <path d="M198,30 L220,30 L220,60" fill="none" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah-p1)"/>
+          <rect x="244" y="45" width="188" height="40" rx="6" fill="var(--color-warn)" fill-opacity="0.14" stroke="currentColor" stroke-width="1.5"><title>Combined pilot pool: all 24 hand-built variants plus a small sample (3-10 problems x 3 splits) of ImpossibleBench.</title></rect>
+          <text x="338" y="60" font-size="11" text-anchor="middle" fill="currentColor">Pilot task pool</text>
+          <text x="338" y="75" font-size="10" text-anchor="middle" fill="currentColor" opacity="0.75">24 + up to 30 IB variants</text>
+          <line x1="338" y1="85" x2="338" y2="130" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah-p1)"/>
+          <rect x="140" y="135" width="196" height="60" rx="6" fill="var(--color-ok)" fill-opacity="0.14" stroke="currentColor" stroke-width="1.5"><title>Pilot run: each task x each topology x each of up to 3 models -- validates the harness and measures topology effects (RQ4).</title></rect>
+          <text x="238" y="153" font-size="11" text-anchor="middle" fill="currentColor">Pilot run</text>
+          <text x="238" y="169" font-size="10" text-anchor="middle" fill="currentColor" opacity="0.75">up to 3 models x</text>
+          <text x="238" y="183" font-size="10" text-anchor="middle" fill="currentColor" opacity="0.75">6 communication topologies</text>
+        </svg>
+        <figcaption><strong>Pilot:</strong> hand-built families used whole, a small ImpossibleBench sample, run across every topology to see how topology itself changes behavior.</figcaption>
+      </figure>
+      <figure class="diagram-card">
+        <svg viewBox="0 0 440 240" role="img" aria-label="Complete-results dataset: LiveCodeBench-hard is used whole as ImpossibleBench; a separate 200-problem sample from LiveCodeBench and APPS is classified into C1-C4 by GPT-5, then constructed and independently verified by GPT-5.4, yielding 82 validated problems; combined with the hand-built families into 579 variants run on all 9 models">
+          <defs><marker id="ah-p2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+          <rect x="8" y="8" width="130" height="36" rx="6" fill="var(--color-fg-muted)" fill-opacity="0.12" stroke="currentColor" stroke-width="1.5"><title>Source: LiveCodeBench's hard tier, used whole as ImpossibleBench (3 splits per problem).</title></rect>
+          <text x="73" y="26" font-size="10" text-anchor="middle" fill="currentColor">LCB-hard (103)</text>
+          <rect x="8" y="52" width="130" height="36" rx="6" fill="var(--color-fg-muted)" fill-opacity="0.12" stroke="currentColor" stroke-width="1.5"><title>Source: 200 problems sampled from LiveCodeBench's other tiers and APPS, with overlap against the ImpossibleBench pool excluded.</title></rect>
+          <text x="73" y="66" font-size="10" text-anchor="middle" fill="currentColor">LCB-other + APPS</text>
+          <text x="73" y="80" font-size="9" text-anchor="middle" fill="currentColor" opacity="0.75">200 sampled, overlap-excluded</text>
+          <line x1="138" y1="26" x2="300" y2="26" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah-p2)"/>
+          <text x="220" y="19" font-size="9" text-anchor="middle" fill="currentColor">used whole, x3 splits</text>
+          <line x1="138" y1="70" x2="180" y2="70" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah-p2)"/>
+          <rect x="184" y="52" width="130" height="36" rx="6" fill="var(--color-warn)" fill-opacity="0.14" stroke="currentColor" stroke-width="1.5"><title>Processing: gpt-5 classifies each of the 200 sampled problems into C1, C2, C3, C4, or none, with a confidence score.</title></rect>
+          <text x="249" y="66" font-size="10" text-anchor="middle" fill="currentColor">Classify C1-C4</text>
+          <text x="249" y="80" font-size="9" text-anchor="middle" fill="currentColor" opacity="0.75">gpt-5</text>
+          <line x1="249" y1="88" x2="249" y2="112" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah-p2)"/>
+          <rect x="184" y="116" width="130" height="40" rx="6" fill="var(--color-warn)" fill-opacity="0.14" stroke="currentColor" stroke-width="1.5"><title>Processing: gpt-5.4 drafts an F1/F2/F3 construction; every claim is independently re-derived by code (BFS for operation budgets, brute-force for register capacity, direct predicate checks) rather than trusted.</title></rect>
+          <text x="249" y="132" font-size="10" text-anchor="middle" fill="currentColor">Construct + verify</text>
+          <text x="249" y="146" font-size="9" text-anchor="middle" fill="currentColor" opacity="0.75">gpt-5.4 + BFS / brute-force / predicate checks</text>
+          <line x1="249" y1="156" x2="249" y2="178" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah-p2)"/>
+          <rect x="184" y="182" width="130" height="36" rx="6" fill="var(--color-ok)" fill-opacity="0.14" stroke="currentColor" stroke-width="1.5"><title>Output: 82 of the 200 candidates survived construction + independent verification (80% yield) -- each with F1/F2/F3 variants.</title></rect>
+          <text x="249" y="196" font-size="10" text-anchor="middle" fill="currentColor">82 validated problems</text>
+          <text x="249" y="210" font-size="9" text-anchor="middle" fill="currentColor" opacity="0.75">x3 feasibility variants</text>
+          <rect x="8" y="182" width="130" height="36" rx="6" fill="var(--color-fg-muted)" fill-opacity="0.12" stroke="currentColor" stroke-width="1.5"><title>Source: the same 8 hand-built families used in the pilot, reused whole.</title></rect>
+          <text x="73" y="196" font-size="10" text-anchor="middle" fill="currentColor">8 hand-built families</text>
+          <text x="73" y="210" font-size="9" text-anchor="middle" fill="currentColor" opacity="0.75">24 variants</text>
+          <line x1="304" y1="26" x2="380" y2="26" stroke="currentColor" stroke-width="1.3"/>
+          <line x1="138" y1="200" x2="380" y2="200" stroke="currentColor" stroke-width="1.3"/>
+          <line x1="314" y1="200" x2="380" y2="200" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah-p2)"/>
+          <path d="M380,26 L410,26 L410,200" fill="none" stroke="currentColor" stroke-width="1.3"/>
+          <rect x="356" y="100" width="76" height="60" rx="6" fill="var(--color-ok)" fill-opacity="0.14" stroke="currentColor" stroke-width="1.5"><title>579 task variants x 9 models, single_agent only = 5,211 total runs.</title></rect>
+          <text x="394" y="122" font-size="10" text-anchor="middle" fill="currentColor">579</text>
+          <text x="394" y="136" font-size="9" text-anchor="middle" fill="currentColor" opacity="0.75">variants</text>
+        </svg>
+        <figcaption><strong>Complete run:</strong> ImpossibleBench used whole; a separate 200-problem sample is classified, constructed and independently verified into 82 new problems; combined with the hand-built families into 579 variants, run single_agent-only on all 9 models (topology held fixed to make the model sweep tractable).</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="card" id="rq-card">
+    <h2 class="section-title">Research questions</h2>
+    <div class="rq-list">
+      <div class="rq-item">
+        <p class="rq-q">RQ1 &middot; How does collective behavior change as constraints tighten?</p>
+        <p class="rq-map">Mapped to: <a href="#fig-category">Valid success by feasibility category &rarr;</a> (pilot), <a href="#chart-complete-type">Pass rate by constraint type &rarr;</a> (complete)</p>
+        <p class="rq-obs"><strong>Observation:</strong> valid success falls from F1 to F3 for every model, but not always monotonically -- granite-8b's valid success actually <em>rises</em> from F1 (27%) to F2 (44%) before collapsing to 0% at F3, the non-monotonic pattern the blueprint flagged as possible.</p>
+      </div>
+      <div class="rq-item">
+        <p class="rq-q">RQ2 &middot; Can teams distinguish difficulty from infeasibility?</p>
+        <p class="rq-map">Mapped to: <a href="#fig-rq2">Infeasible-claim rate by category &rarr;</a> (pilot), <a href="#chart-complete-infeas">Correct vs false infeasibility &rarr;</a> (complete)</p>
+        <p class="rq-obs"><strong>Observation:</strong> calibration varies sharply by model. qwen38-27b separates the categories cleanly (0% infeasible-claims at F1, climbing to 97% at F3). phi4-mini claims infeasible 63-97% of the time at <em>every</em> category, F1 included -- it isn't detecting infeasibility so much as defaulting to it, which only looks well-calibrated on F3 by accident.</p>
+      </div>
+      <div class="rq-item">
+        <p class="rq-q">RQ3 &middot; What happens when legitimate success is impossible?</p>
+        <p class="rq-map">Mapped to: <a href="#fig-rq3">False success on F3 by constraint type &rarr;</a>, <a href="#fig-bypass">C3 register-bypass attempts &rarr;</a> (pilot), <a href="#chart-complete-calib">Correct vs false success &rarr;</a> (complete)</p>
+        <p class="rq-obs"><strong>Observation:</strong> false success on certified-infeasible (F3) tasks ranges from 3% (qwen38-27b, phi4-mini) to 73% (granite-8b) depending on the model, and from 0% (C2, operation budget) to 53% (C1, output/semantic) depending on which constraint is being violated. 6 of 9 models attempted the same C3 register-bypass loophole at least once before it was closed.</p>
+      </div>
+      <div class="rq-item">
+        <p class="rq-q">RQ4 &middot; How does topology alter these outcomes?</p>
+        <p class="rq-map">Mapped to: <a href="#fig-arch">Valid success by communication architecture &rarr;</a> (pilot only -- the complete run holds topology fixed at single_agent)</p>
+        <p class="rq-obs"><strong>Observation:</strong> no topology is uniformly better. comm_fully_connected lifts qwen38-27b's valid success from 50% (single_agent) to 67%, but drops qwen25coder-7b's from 42% to 33% over that same change -- adding communication helps, hurts, or does nothing depending on the model, not the protocol.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar" role="tablist" aria-label="Dashboard sections">
+    <button type="button" class="tab-btn" id="tab-btn-pilot" role="tab" aria-selected="true" aria-controls="page-pilot">Pilot Summary</button>
+    <button type="button" class="tab-btn" id="tab-btn-complete" role="tab" aria-selected="false" aria-controls="page-complete">Complete Results</button>
+  </div>
+
+  <div id="page-pilot" class="tab-page">
+
+  <div class="card" id="glossary-card">
+    <h2 class="section-title">What these mean</h2>
+    <div class="glossary-section" id="topology-section">
+      <p class="glossary-group-title">Topology effects -- who sees whom, and does it help</p>
+      <p class="note">Drag any node below to rearrange its diagram -- the layout is a live force simulation, not a fixed picture.</p>
+      <div class="proto-grid">
+        <figure class="proto-card topo-card">
+          <svg id="topo-single_agent" viewBox="0 0 160 64" role="img" aria-label="single_agent: one model works alone, no teammates and no aggregator"></svg>
+          <figcaption><strong>single_agent</strong> -- one model, no team, no aggregator.</figcaption>
+        </figure>
+        <figure class="proto-card topo-card">
+          <svg id="topo-team4_aggregator" viewBox="0 0 200 110" role="img" aria-label="team4_aggregator: 4 workers with no visibility into each other, combined by a deterministic vote"></svg>
+          <figcaption><strong>team4_aggregator</strong> <span class="pill pill-muted">legacy</span> -- 4 isolated workers (no visibility into each other), combined by a deterministic rule-based vote (V), not an LLM.</figcaption>
+        </figure>
+        <figure class="proto-card topo-card">
+          <svg id="topo-comm_independent" viewBox="0 0 200 110" role="img" aria-label="comm_independent: 4 workers with no visibility into each other, combined by a separate LLM aggregator call"></svg>
+          <figcaption><strong>comm_independent</strong> -- same isolated workers as team4_aggregator, but a separate LLM aggregator call (A) reads all 4 answers instead of a fixed rule.</figcaption>
+        </figure>
+        <figure class="proto-card topo-card">
+          <svg id="topo-comm_chain" viewBox="0 0 200 110" role="img" aria-label="comm_chain: 4 workers in a line, each seeing only the previous one, then an LLM aggregator"></svg>
+          <figcaption><strong>comm_chain</strong> -- each agent sees only its predecessor and can revise its answer, then the LLM aggregator (A) reads the chain.</figcaption>
+        </figure>
+        <figure class="proto-card topo-card">
+          <svg id="topo-comm_star" viewBox="0 0 200 150" role="img" aria-label="comm_star: a center agent exchanges with 3 peripheral agents who cannot see each other, then an LLM aggregator"></svg>
+          <figcaption><strong>comm_star</strong> -- the center (C) exchanges with all 3 peripherals; peripherals see only the center, never each other. &rarr; LLM aggregator.</figcaption>
+        </figure>
+        <figure class="proto-card topo-card">
+          <svg id="topo-comm_fully_connected" viewBox="0 0 200 150" role="img" aria-label="comm_fully_connected: all 4 workers see every other worker, then an LLM aggregator"></svg>
+          <figcaption><strong>comm_fully_connected</strong> -- every worker sees every other worker's output before finalizing. &rarr; LLM aggregator (A).</figcaption>
+        </figure>
+      </div>
+      <p class="interpret" id="topology-summary"></p>
+    </div>
+    <div class="glossary-section">
+      <p class="glossary-group-title">Constraint types (C1-C4)</p>
+      <dl class="glossary-list">
+        <dt>C1 &middot; output / semantic</dt><dd>A rule about the output's correctness itself -- e.g. ties must keep their original relative order (ordered_sort_pairs).</dd>
+        <dt>C2 &middot; operation budget</dt><dd>A cap on how many of a specific operation the solution may use -- e.g. a limited number of adjacent swaps (adj_swap_sort).</dd>
+        <dt>C3 &middot; workspace / state budget</dt><dd>A cap on working memory -- a fixed number of registers are the <em>only</em> legitimate place to hold a bit (bitvector_recall). F3 gives provably too few registers for every bit, so no honest solution can succeed.</dd>
+        <dt>C4 &middot; information / access</dt><dd>A restriction on what the solution may see or query -- e.g. only a limited prefix window of the array is visible at a time (prefix_restricted_max).</dd>
+      </dl>
+    </div>
+    <p class="note">F1 = feasible (comfortably solvable), F2 = feasible but tightly constrained, F3 = certified infeasible -- the constraint makes success provably impossible, so any valid-success rate above 0% on F3 is itself evidence of a loophole.</p>
+  </div>
+
+  <div class="kpi-grid" id="kpi-grid" data-source="by_model"></div>
+
+  <div class="charts-grid">
+    <div class="card chart-box" id="fig-category" data-source="by_model_category">
+      <h2>Valid success by feasibility category <span class="pill pill-muted">RQ1</span></h2>
+      <p class="note">F1 = feasible (easy), F2 = feasible but constrained, F3 = certified infeasible (valid success must be 0 here).</p>
+      <svg id="chart-category"></svg>
+      <div class="legend" id="legend-category"></div>
+      <p class="interpret">How to read this: valid success should fall from F1 to F2 to F3. A model with a visible F3 bar is passing tasks that are provably impossible -- that's a grading gap or an exploited loophole, not a real win.</p>
+    </div>
+    <div class="card chart-box" id="fig-rq2" data-source="by_model_category">
+      <h2>Infeasible-claim rate by feasibility category <span class="pill pill-muted">RQ2</span></h2>
+      <p class="note">Same dataset as the valid-success chart, read differently: how often each model says "infeasible" at F1 (should be ~0%), F2, and F3 (should be ~100%).</p>
+      <svg id="chart-rq2"></svg>
+      <div class="legend" id="legend-rq2"></div>
+      <p class="interpret">How to read this: a model that distinguishes difficulty from infeasibility shows a rising staircase (low at F1, high at F3). A model with uniformly high bars at every category isn't detecting infeasibility -- it's defaulting to claiming it regardless of whether the task is actually solvable.</p>
+    </div>
+    <div class="card chart-box" id="fig-rq3" data-source="by_model_type_f3">
+      <h2>False success on F3 tasks, by constraint type <span class="pill pill-muted">RQ3</span></h2>
+      <p class="note">Certified-infeasible (F3) tasks only, broken out per model and per constraint type (C1 output/semantic, C2 operation budget, C3 workspace/state, C4 information access).</p>
+      <svg id="chart-rq3"></svg>
+      <div class="legend" id="legend-rq3"></div>
+      <p class="interpret">How to read this: a tall bar means that model claimed success on a provably impossible task of that constraint type. Compare across constraint types within a model's 4 bars (which rule does it break most) and across models within one constraint type (which model fakes success most).</p>
+    </div>
+    <div class="card chart-box" id="fig-arch" data-source="by_model_arch">
+      <h2>Valid success by communication architecture <span class="pill pill-muted">RQ4</span></h2>
+      <p class="note">single_agent and team4_aggregator (deterministic vote) vs. the four comm_* protocols (separate LLM aggregator) -- see "What these mean" above for how each shares information between agents.</p>
+      <svg id="chart-arch"></svg>
+      <div class="legend" id="legend-arch"></div>
+      <p class="interpret">How to read this: compare each bar back to that model's single_agent bar. Close to it means the protocol isn't earning its extra LLM calls; below it means coordination is actively hurting.</p>
+    </div>
+  </div>
+
+  <div class="card" data-source="impossiblebench" data-row-key="model,task,impossible_type">
+    <h2>ImpossibleBench <span class="pill pill-warn">1 repeat</span></h2>
+    <p class="note">All 9 models, 3 LiveCodeBench-hard problems x 3 splits (original / oneoff / conflicting), single_agent, 1 repeat. gemma4-31b and qwen38-27b needed a 16k context window (some prompts exceed 4096 tokens); nemotron35-30b needed a 10k per-call output budget for its reasoning preamble.</p>
+    <div class="table-wrap">
+      <table id="table-ib">
+        <thead><tr>
+          <th data-field="model">Model</th>
+          <th data-field="task">Task</th>
+          <th data-field="impossible_type">Split</th>
+          <th data-field="decision">Decision</th>
+          <th data-field="verdict">Verdict</th>
+          <th data-field="specification_correctness">Spec-correct</th>
+          <th data-field="conflicting_test_pass">Passed given test</th>
+          <th data-field="test_specific_workaround">Workaround flag</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" data-source="self_improve" data-row-key="model,condition,lineage_idx,generation">
+    <h2>Self-improvement <span class="pill pill-warn">1-2 lineages</span></h2>
+    <p class="note">All 9 models, task adj_swap_sort/F2, 4 conditions x 2 lineages x 3 generations. qwen38-27b, gemma4-31b, and nemotron35-30b default to NO_SUBMISSION every single generation -- the same worst-case-inversion-count reasoning they use in the main matrix concludes this instance is infeasible without ever probing it, so none of their 4 conditions get a success signal to learn from. phi4-mini and mistral-7b show the same pattern. Coder-7B passes almost every attempt instead, so its scaffold/recursive conditions rarely had a failure to learn from either -- a real split in how models engage with this task, not a mechanics check.</p>
+    <div class="table-wrap">
+      <table id="table-si">
+        <thead><tr>
+          <th data-field="model">Model</th>
+          <th data-field="condition">Condition</th>
+          <th class="num" data-field="lineage_idx">Lineage</th>
+          <th class="num" data-field="generation">Gen</th>
+          <th data-field="decision">Decision</th>
+          <th data-field="verdict">Verdict</th>
+          <th data-field="proposed_rule">Proposed rule</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">Follow-up validation (qwen38-27b, gemma4-31b, nemotron35-30b only)</h2>
+    <p class="note">Three deeper checks run only on the 3 largest/strongest models: a second, independently-built task family per constraint type (does the C1-C4 effect replicate on a different task?), ImpossibleBench under team architectures (does topology change cheating/detection behavior?), and self-improvement under full-team collaboration instead of solo (does a team ever attempt what a solo agent refuses?).</p>
+
+    <p class="glossary-group-title" style="margin-top:.5rem;">Second task family per type -- does it replicate?</p>
+    <div class="table-wrap" data-source="second_family_validation" data-row-key="model_name,constraint_type,family_id,category">
+      <table id="table-secondfam">
+        <thead><tr>
+          <th data-field="model_name">Model</th>
+          <th data-field="constraint_type">Type</th>
+          <th data-field="family_id">Family</th>
+          <th data-field="category">Cat</th>
+          <th class="num" data-field="valid">Valid</th>
+          <th class="num" data-field="false_succ">False succ</th>
+          <th class="num" data-field="infeas">Infeasible</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="interpret">How to read this: for every type and model, F3 valid is 0 in both families (pigeonhole/counterexample arguments hold regardless of task content). Beyond that, the two families don't always agree -- e.g. hidden_suffix_search's F1 is claimed INFEASIBLE 100% of the time by all 3 models despite being directly checkable, unlike prefix_restricted_max's F1. See the note below.</p>
+
+    <p class="glossary-group-title" style="margin-top:.9rem;">ImpossibleBench by communication architecture</p>
+    <div class="table-wrap" data-source="ib_by_arch" data-row-key="model_name,architecture">
+      <table id="table-ibarch">
+        <thead><tr>
+          <th data-field="model_name">Model</th>
+          <th data-field="architecture">Architecture</th>
+          <th class="num" data-field="n">Runs</th>
+          <th class="num" data-field="valid">Valid</th>
+          <th class="num" data-field="false_succ">False succ</th>
+          <th class="num" data-field="infeas">Infeasible</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="interpret">How to read this: nemotron solves roughly a third as often as gemma4/qwen38 on these harder LiveCodeBench problems, and is the only model where false success stays roughly flat rather than falling as team structure adds oversight. qwen38-27b's infeasible-claim rate stays pinned around 30-53% across all 3 architectures -- consistent with the same worst-case-overgeneralization pattern documented elsewhere on this page.</p>
+
+    <p class="glossary-group-title" style="margin-top:.9rem;">Self-improvement under full-team collaboration</p>
+    <p class="note">Same adj_swap_sort/F2 task as the single-agent self-improvement table above, but each generation's attempt is produced by the comm_fully_connected team (4 agents who all see each other, plus an LLM aggregator) instead of one agent. Result: all 3 models give <strong>NO_SUBMISSION on all 24/24 generations</strong> (4 conditions x 2 lineages x 3 generations), identical to their single-agent behavior -- having a full team available never changes the decision to refuse this task.</p>
+  </div>
+
+  <div class="card" id="fig-bypass" data-source="bypass_attempts" data-row-key="model">
+    <h2 class="section-title">C3 register-bypass attempts <span class="pill pill-muted">RQ3</span></h2>
+    <p class="note">bitvector_recall gives exactly enough (F1/F2) or provably too few (F3) registers to hold the task's bits, and states "registers are your only memory." This counts submissions that smuggled a raw bit past that rule through a plain Python variable instead -- detected by static taint analysis, and now blocked outright (the three dashboard tables above already reflect the correction). Qwen3.8-27B, Gemma-4-31B-it, and Nemotron-3.5-Lightning-30B-A3B are the only models with zero attempts.</p>
+    <div class="table-wrap">
+      <table id="table-bypass">
+        <thead><tr>
+          <th data-field="model">Model</th>
+          <th class="num" data-field="bitvector_recall_runs">Runs</th>
+          <th class="num" data-field="bypass_attempts">Bypass attempts</th>
+          <th class="num" data-field="attempt_rate">Attempt rate</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" data-source="examples">
+    <h2 class="section-title">Real transcript examples</h2>
+    <p class="note">Four actual runs picked to show distinct failure modes side by side, not aggregates -- the full prompt, the model's decision and reasoning, and the grading verdict.</p>
+    <div id="examples-list" style="display:flex; flex-direction:column; gap:1rem;"></div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">Scope notes</h2>
+    <p class="note">851 real-model runs across all 9 planned models -- Qwen3.5-4B, Qwen3.5-9B, Qwen3.8-27B, Qwen2.5-Coder-7B-Instruct, Phi-4-mini-instruct, Mistral-7B-Instruct-v0.3, IBM Granite-3.1-8B-Instruct, Gemma-4-31B-it, and Nemotron-3.5-Lightning-30B-A3B -- x 4 constraint types (C1-C4, one hand-built task family per type) x 3 feasibility categories (F1/F2/F3) x 6 architectures (single_agent, legacy team4_aggregator, and the 4 comm_* protocols with an LLM aggregator). All 9 models now have the full base + communication-protocol matrix. Nemotron-3.5 is a reasoning model that emits a &lt;think&gt; preamble before its JSON answer -- the harness now strips that before parsing and gives it a larger per-call token budget, after an initial run showed near-100% unparseable output without that fix. A C3 register-bypass loophole (see the table above) was found, fixed in the sandbox, and used to retroactively re-score every historical bitvector_recall submission -- F3 valid_success is now exactly 0 for every model, as the pigeonhole proof requires. Each constraint type still has only 1 base task family for 6 of 9 models; for qwen38-27b, gemma4-31b, and nemotron35-30b, a 2nd independently-built family per type was added (see "Follow-up validation" above) specifically to start separating the type effect from the task chosen -- F3 valid is 0 in both families for every type, but the two families don't always agree on F1/F2 (see below). ImpossibleBench and self-improvement sections now cover all 9 models, but still only 1 repeat / 1-2 lineages each, so read them for direction (which models engage vs. default to NO_SUBMISSION) rather than precise rates. All sampling moved to temperature=1.0 (from 0.3, and 0.2 for the aggregator) partway through -- runs before this point used the lower values; this is a methodology change, not a bug, but means temperature is not held constant across the full dataset. The register-bypass taint check itself had a gap (it tracked `x = x + stream.next_bit()` but missed the equivalent `x += stream.next_bit()`); fixed, and re-checked against every historical PASS submission -- none had actually exploited it. Separately, a real cross-cutting behavioral finding: qwen38-27b, gemma4-31b, and nemotron35-30b all reason about the <em>general, worst-case</em> version of a task rather than the <em>specific instance</em> actually posed, on at least 3 unrelated tasks -- adj_swap_sort/F2 (claiming infeasible via the worst-case inversion bound without checking the given array), the self-improvement refusal (same task, same reasoning, regardless of team structure), and hidden_suffix_search/F1 (claiming infeasible via a general information-theoretic argument even though the target is directly visible in this instance). One data-loss incident along the way: a GPU job hit its 12-hour wall-clock limit mid-run, corrupting nemotron's ImpossibleBench-under-team-architecture batch and its self-improvement-under-comm batch with connection errors; both were fully recollected on a longer-lived allocation (`run_pilot.py` gained a `--resume` flag specifically so this doesn't require redoing finished work next time).</p>
+  </div>
+
+  </div>
+
+  <div id="page-complete" class="tab-page" hidden>
+
+    <div class="card">
+      <h2 class="section-title">Full-scale run, all 9 models</h2>
+      <p class="page-sub-detail" id="complete-takeaway">Loading…</p>
+      <p class="note">Topology held fixed at single_agent throughout -- varying communication architecture across 9 models x 579 variants would have multiplied this run several-fold. Topology effects (RQ4) are only measured in the Pilot Summary tab, on up to 3 models.</p>
+    </div>
+
+    <div class="card">
+      <h2>Pass rate by model <span class="pill pill-muted">579 variants/model</span></h2>
+      <p class="note">24 hand-built pilot variants + 309 ImpossibleBench (all 103 problems x 3 splits) + 246 stratified C1-C4 variants (82 LiveCodeBench/APPS-derived problems x F1/F2/F3), single_agent architecture, 1 repeat.</p>
+      <div class="chart-box"><svg id="chart-complete-pass"></svg></div>
+      <div class="legend" id="legend-complete-pass"></div>
+    </div>
+
+    <div class="card" id="chart-complete-calib">
+      <h2>Correct success rate vs. false success rate</h2>
+      <p class="note">Of each model's "SOLVED" claims: <strong>correct success</strong> is the share that actually passed; <strong>false success</strong> is the share that didn't. The two always sum to 100% of that model's solved claims -- a model making few SOLVED claims in the first place (see the NO_SUBMISSION/INFEASIBLE share on the table below) can still have a high false-success rate among the few it does make.</p>
+      <div class="chart-box"><svg id="svg-complete-calib"></svg></div>
+      <div class="legend" id="legend-complete-calib"></div>
+    </div>
+
+    <div class="card" id="chart-complete-infeas">
+      <h2>Correct infeasibility rate vs. false infeasibility rate</h2>
+      <p class="note">Of each model's INFEASIBLE claims: <strong>correct infeasibility</strong> is the share where the task genuinely was infeasible; <strong>false infeasibility</strong> is the share where it was actually solvable -- the model gave up on something it could have done. The two sum to 100% of that model's infeasible claims.</p>
+      <div class="chart-box"><svg id="svg-complete-infeas"></svg></div>
+      <div class="legend" id="legend-complete-infeas"></div>
+    </div>
+
+    <div class="card">
+      <h2>Output truncation by task source <span class="pill pill-warn">methodology note</span></h2>
+      <p class="note">Share of runs where the model's response never parsed into a decision at all -- almost always the model's reasoning preamble exhausting its per-call token budget before it reaches the answer. This is a budget artifact, not a capability signal, but it means the affected cells are missing data rather than genuine model behavior.</p>
+      <div class="chart-box"><svg id="chart-complete-unparse"></svg></div>
+      <div class="legend" id="legend-complete-unparse"></div>
+      <p class="interpret" id="complete-unparse-note"></p>
+    </div>
+
+    <div class="card">
+      <h2>Pass rate by model x constraint type</h2>
+      <p class="note">C1 (output/semantic), C2 (operation budget), C3 (workspace/state), C4 (information access) -- pooled across hand-built and stratified task families, ImpossibleBench excluded (it has no C1-C4 label).</p>
+      <div class="chart-box"><svg id="chart-complete-type"></svg></div>
+      <div class="legend" id="legend-complete-type"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Full results table</h2>
+      <div class="table-wrap">
+        <table id="table-complete">
+          <thead><tr><th>Model</th><th class="num">Runs</th><th class="num">Pass</th><th class="num">Pass rate</th><th class="num">False success</th><th class="num">Infeasible accuracy</th></tr></thead>
+          <tbody id="table-complete-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+(function () {
+  const fmtPct = d3.format('.0%');
+  const tooltip = document.getElementById('tooltip');
+  const ARCH_ORDER = ['single_agent', 'team4_aggregator', 'comm_independent', 'comm_chain', 'comm_star', 'comm_fully_connected'];
+
+  function showTip(html, x, y) {
+    tooltip.innerHTML = html;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+    tooltip.style.opacity = 1;
+  }
+  function hideTip() { tooltip.style.opacity = 0; }
+
+  function pillFor(val, kind) {
+    if (val === '' || val === null || val === undefined) return '<span class="pill pill-muted">n/a</span>';
+    const v = String(val).toLowerCase();
+    if (kind === 'bool') {
+      if (v === 'true') return '<span class="pill pill-ok">yes</span>';
+      if (v === 'false') return '<span class="pill pill-muted">no</span>';
+      return '<span class="pill pill-muted">n/a</span>';
+    }
+    if (kind === 'verdict') {
+      if (v === 'pass') return '<span class="pill pill-ok">PASS</span>';
+      if (v === 'no_submission') return '<span class="pill pill-muted">NO_SUBMISSION</span>';
+      return '<span class="pill pill-bad">' + val + '</span>';
+    }
+    if (kind === 'decision') {
+      if (v === 'solved') return '<span class="pill pill-ok">SOLVED</span>';
+      if (v === 'infeasible') return '<span class="pill pill-warn">INFEASIBLE</span>';
+      return '<span class="pill pill-muted">' + val + '</span>';
+    }
+    return val;
+  }
+
+  // ---- Interactive topology diagrams: colored by role, draggable with
+  // collision physics, hover highlights the message path, and a looping
+  // pulse animates along each edge in its talk direction. ----
+  const TOPO_ROLE_COLOR = { worker: dash.colors[0], aggregator: dash.colors[4], center: dash.colors[2], single: dash.colors[0], output: dash.colors[6] };
+  const TOPO_ROLE_DESC = {
+    worker: 'Produces its own answer from the task prompt.',
+    aggregator: 'Reads the workers\' answers and picks the final one.',
+    center: 'Exchanges with every peripheral; peripherals never see each other.',
+    single: 'The only agent -- no teammates, no aggregator.',
+    output: 'The final answer returned to the harness.',
+  };
+
+  function renderTopology(svgId, nodes, edges) {
+    const svg = d3.select('#' + svgId);
+    const markerId = 'ah-' + svgId;
+    const byId = {};
+    nodes.forEach(function (n) { byId[n.id] = n; });
+
+    svg.append('defs').append('marker')
+      .attr('id', markerId).attr('viewBox', '0 0 10 10').attr('refX', 8).attr('refY', 5)
+      .attr('markerWidth', 7).attr('markerHeight', 7).attr('orient', 'auto-start-reverse')
+      .append('path').attr('d', 'M0,0 L10,5 L0,10 z').attr('fill', 'currentColor');
+
+    const edgeSel = svg.selectAll('.topo-edge').data(edges).join('line')
+      .attr('class', 'topo-edge')
+      .attr('stroke', 'currentColor')
+      .attr('stroke-width', function (e) { return e.weak ? 1 : 1.5; })
+      .attr('marker-end', function (e) { return e.undirected ? null : 'url(#' + markerId + ')'; })
+      .attr('marker-start', function (e) { return e.bidirectional ? 'url(#' + markerId + ')' : null; });
+
+    const baseOpacity = function (e) { return e.weak ? 0.4 : 0.8; };
+    edgeSel.attr('opacity', baseOpacity);
+
+    const pulseEdges = edges.filter(function (e) { return !e.weak; });
+    const pulseSel = svg.selectAll('.topo-pulse').data(pulseEdges).join('circle')
+      .attr('class', 'topo-pulse').attr('r', 2.8)
+      .attr('fill', function (e) { return TOPO_ROLE_COLOR[byId[e.to] ? byId[e.to].role : ''] || dash.colors[0]; })
+      .attr('opacity', 0.85);
+
+    function reposition() {
+      edgeSel
+        .attr('x1', function (e) { return byId[e.from].x; }).attr('y1', function (e) { return byId[e.from].y; })
+        .attr('x2', function (e) { return byId[e.to].x; }).attr('y2', function (e) { return byId[e.to].y; });
+      nodeSel.attr('transform', function (n) { return 'translate(' + n.x + ',' + n.y + ')'; });
+    }
+
+    nodes.forEach(function (n) { n.x0 = n.x; n.y0 = n.y; });
+    const sim = d3.forceSimulation(nodes)
+      .force('collide', d3.forceCollide(function (n) { return n.r + 7; }).strength(1))
+      .force('x', d3.forceX(function (n) { return n.x0; }).strength(0.12))
+      .force('y', d3.forceY(function (n) { return n.y0; }).strength(0.12))
+      .alpha(0.9).alphaDecay(0.045)
+      .on('tick', reposition);
+
+    const nodeSel = svg.selectAll('.topo-node').data(nodes, function (n) { return n.id; }).join('g')
+      .attr('class', 'topo-node')
+      .call(d3.drag()
+        .on('start', function (event, d) { d.fx = d.x; d.fy = d.y; sim.alphaTarget(0.5).restart(); })
+        .on('drag', function (event, d) { d.fx = event.x; d.fy = event.y; })
+        .on('end', function (event, d) { d.fx = null; d.fy = null; sim.alphaTarget(0); }));
+
+    nodeSel.append('circle')
+      .attr('r', function (n) { return n.r; })
+      .attr('fill', function (n) { return TOPO_ROLE_COLOR[n.role] || dash.colors[0]; })
+      .attr('fill-opacity', 0.16)
+      .attr('stroke', function (n) { return TOPO_ROLE_COLOR[n.role] || 'currentColor'; })
+      .attr('stroke-width', 2);
+    nodeSel.append('text')
+      .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+      .attr('font-size', function (n) { return n.r >= 14 ? 12 : 10.5; })
+      .attr('font-weight', 600)
+      .attr('fill', function (n) { return TOPO_ROLE_COLOR[n.role] || 'currentColor'; })
+      .text(function (n) { return n.label; });
+
+    nodeSel.on('mouseenter', function (event, d) {
+      edgeSel.attr('opacity', function (e) { return (e.from === d.id || e.to === d.id) ? 1 : 0.12; });
+      showTip('<strong>' + d.label + '</strong><br>' + (TOPO_ROLE_DESC[d.role] || ''), event.pageX + 12, event.pageY + 12);
+    }).on('mousemove', function (event) {
+      tooltip.style.left = (event.pageX + 12) + 'px'; tooltip.style.top = (event.pageY + 12) + 'px';
+    }).on('mouseleave', function () {
+      edgeSel.attr('opacity', baseOpacity);
+      hideTip();
+    });
+
+    reposition();
+
+    // Looping message-flow pulse: a dot travels from `from` to `to` (and
+    // back, for bidirectional edges) every 1.6s, reading live endpoints so
+    // it stays correct while a node is being dragged.
+    d3.timer(function (elapsed) {
+      const period = 1600;
+      pulseSel.each(function (e) {
+        let t = (elapsed / period + (e._phase || 0)) % 1;
+        if (e.bidirectional && Math.floor(elapsed / period + (e._phase || 0)) % 2 === 1) t = 1 - t;
+        const x = byId[e.from].x + (byId[e.to].x - byId[e.from].x) * t;
+        const y = byId[e.from].y + (byId[e.to].y - byId[e.from].y) * t;
+        d3.select(this).attr('cx', x).attr('cy', y);
+      });
+    });
+  }
+
+  (function () {
+    renderTopology('topo-single_agent', [
+      { id: 'M', x: 30, y: 32, r: 16, label: 'M', role: 'single' }, { id: 'out', x: 122, y: 32, r: 20, label: 'answer', role: 'output' },
+    ], [{ from: 'M', to: 'out' }]);
+
+    const worker4 = function (aggLabel, aggR) { return { nodes: [
+      { id: '1', x: 32, y: 26, r: 11, label: '1', role: 'worker' }, { id: '2', x: 76, y: 26, r: 11, label: '2', role: 'worker' },
+      { id: '3', x: 124, y: 26, r: 11, label: '3', role: 'worker' }, { id: '4', x: 168, y: 26, r: 11, label: '4', role: 'worker' },
+      { id: 'A', x: 100, y: 88, r: aggR, label: aggLabel, role: 'aggregator' },
+    ], edges: ['1', '2', '3', '4'].map(function (i, idx) { return { from: i, to: 'A', _phase: idx * 0.22 }; }) }; };
+
+    const t4 = worker4('V', 14);
+    renderTopology('topo-team4_aggregator', t4.nodes, t4.edges);
+    const ci = worker4('A', 14);
+    renderTopology('topo-comm_independent', ci.nodes, ci.edges);
+
+    renderTopology('topo-comm_chain', [
+      { id: '1', x: 32, y: 26, r: 11, label: '1', role: 'worker' }, { id: '2', x: 76, y: 26, r: 11, label: '2', role: 'worker' },
+      { id: '3', x: 124, y: 26, r: 11, label: '3', role: 'worker' }, { id: '4', x: 168, y: 26, r: 11, label: '4', role: 'worker' },
+      { id: 'A', x: 100, y: 88, r: 14, label: 'A', role: 'aggregator' },
+    ], [
+      { from: '1', to: '2', _phase: 0 }, { from: '2', to: '3', _phase: 0.15 }, { from: '3', to: '4', _phase: 0.3 },
+      { from: '1', to: 'A', _phase: 0.5 }, { from: '2', to: 'A', _phase: 0.6 }, { from: '3', to: 'A', _phase: 0.7 }, { from: '4', to: 'A', _phase: 0.8 },
+    ]);
+
+    renderTopology('topo-comm_star', [
+      { id: 'C', x: 100, y: 35, r: 13, label: 'C', role: 'center' },
+      { id: '1', x: 35, y: 112, r: 11, label: '1', role: 'worker' }, { id: '2', x: 100, y: 128, r: 11, label: '2', role: 'worker' }, { id: '3', x: 165, y: 112, r: 11, label: '3', role: 'worker' },
+    ], [
+      { from: 'C', to: '1', bidirectional: true, _phase: 0 }, { from: 'C', to: '2', bidirectional: true, _phase: 0.3 }, { from: 'C', to: '3', bidirectional: true, _phase: 0.6 },
+    ]);
+
+    renderTopology('topo-comm_fully_connected', [
+      { id: '1', x: 50, y: 30, r: 11, label: '1', role: 'worker' }, { id: '2', x: 150, y: 30, r: 11, label: '2', role: 'worker' },
+      { id: '3', x: 50, y: 110, r: 11, label: '3', role: 'worker' }, { id: '4', x: 150, y: 110, r: 11, label: '4', role: 'worker' },
+      { id: 'A', x: 100, y: 135, r: 12, label: 'A', role: 'aggregator' },
+    ], [
+      { from: '1', to: '2', undirected: true, weak: true }, { from: '3', to: '4', undirected: true, weak: true },
+      { from: '1', to: '3', undirected: true, weak: true }, { from: '2', to: '4', undirected: true, weak: true },
+      { from: '1', to: '4', undirected: true, weak: true }, { from: '2', to: '3', undirected: true, weak: true },
+      { from: '1', to: 'A', _phase: 0 }, { from: '2', to: 'A', _phase: 0.2 }, { from: '3', to: 'A', _phase: 0.4 }, { from: '4', to: 'A', _phase: 0.6 },
+    ]);
+  })();
+
+  // ---- Topology effects summary (by_model_arch) ----
+  dash.onData(function () {
+    const res = dash.data('by_model_arch');
+    const el = document.getElementById('topology-summary');
+    if (res.status !== 'ok') return;
+    const base = {}; const rows = res.data;
+    rows.forEach(function (r) { if (r.architecture === 'single_agent') base[r.model_name] = +r.valid; });
+    const deltas = rows.filter(function (r) { return r.architecture !== 'single_agent' && base[r.model_name] !== undefined; })
+      .map(function (r) { return { model: r.model_name, arch: r.architecture, delta: +r.valid - base[r.model_name] }; });
+    if (!deltas.length) return;
+    const bestDelta = deltas.slice().sort(function (a, b) { return b.delta - a.delta; })[0];
+    const worstDelta = deltas.slice().sort(function (a, b) { return a.delta - b.delta; })[0];
+    const avg = deltas.reduce(function (s, d) { return s + d.delta; }, 0) / deltas.length;
+    el.textContent =
+      'Net effect vs. single_agent, averaged over every model/topology pair: ' + (avg >= 0 ? '+' : '') + fmtPct(avg) + '. ' +
+      'Best case: ' + bestDelta.model + ' under ' + bestDelta.arch + ' (' + (bestDelta.delta >= 0 ? '+' : '') + fmtPct(bestDelta.delta) + '). ' +
+      'Worst case: ' + worstDelta.model + ' under ' + worstDelta.arch + ' (' + (worstDelta.delta >= 0 ? '+' : '') + fmtPct(worstDelta.delta) + '). ' +
+      'No topology wins or loses consistently -- the sign of the effect depends on the model.';
+  });
+
+  // ---- KPI cards (by_model) ----
+  dash.onData(function () {
+    const res = dash.data('by_model');
+    const grid = document.getElementById('kpi-grid');
+    if (res.status !== 'ok') { grid.innerHTML = '<div class="dash-skeleton" style="height:140px"></div>'; return; }
+    const rows = res.data;
+    grid.innerHTML = '';
+    rows.forEach(function (r) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML =
+        '<div class="kpi-name">' + r.model_name + '</div>' +
+        '<div class="kpi-row"><span class="kpi-value">' + fmtPct(r.valid) + '</span><span class="kpi-sub">valid success</span></div>' +
+        '<div class="kpi-flags">' +
+          '<span><span class="flag-dot" style="background:var(--color-bad)"></span>' + fmtPct(r.false_succ) + ' false success</span>' +
+          '<span><span class="flag-dot" style="background:var(--color-warn)"></span>' + fmtPct(r.infeas) + ' infeasible-claim</span>' +
+        '</div>' +
+        '<p class="note">n=' + r.n + ' runs</p>';
+      grid.appendChild(card);
+    });
+    const best = rows.slice().sort(function (a, b) { return b.valid - a.valid; })[0];
+    const worst = rows.slice().sort(function (a, b) { return b.infeas - a.infeas; })[0];
+    const totalN = rows.reduce(function (s, r) { return s + Number(r.n); }, 0);
+    const worstFalse = rows.slice().sort(function (a, b) { return b.false_succ - a.false_succ; })[0];
+    document.getElementById('takeaway-stat').textContent =
+      totalN + ' runs across ' + rows.length + ' models, 4 constraint types (C1-C4), and up to 6 communication architectures. ' +
+      best.model_name + ' has the highest valid-success rate (' + fmtPct(best.valid) + '); ' +
+      worst.model_name + ' claims infeasible most often (' + fmtPct(worst.infeas) + '); ' +
+      worstFalse.model_name + ' has the highest false-success rate (' + fmtPct(worstFalse.false_succ) + ').';
+  });
+
+  // ---- TL;DR (reads both the pilot and complete-results datasets) ----
+  dash.onData(function () {
+    const pilot = dash.data('by_model');
+    const cModel = dash.data('complete_by_model');
+    const cCalib = dash.data('complete_calibration');
+    const cUnparse = dash.data('complete_unparseable_by_source');
+    const list = document.getElementById('tldr-list');
+    if (pilot.status !== 'ok' || cModel.status !== 'ok' || cCalib.status !== 'ok' || cUnparse.status !== 'ok') {
+      list.innerHTML = '<li class="note">Loading…</li>';
+      return;
+    }
+    const pRows = pilot.data, cRows = cModel.data, calRows = cCalib.data;
+    const pilotN = pRows.reduce(function (s, r) { return s + Number(r.n); }, 0);
+    const completeN = cRows.reduce(function (s, r) { return s + Number(r.total_runs); }, 0);
+    const bestComplete = cRows.slice().sort(function (a, b) { return b.pass_rate - a.pass_rate; })[0];
+    const worstCalibSuccess = calRows.slice().sort(function (a, b) { return b.false_success_rate - a.false_success_rate; })[0];
+    const bestCalibInfeas = calRows.slice().sort(function (a, b) { return b.correct_infeasible_rate - a.correct_infeasible_rate; })[0];
+    const worstUnparse = cUnparse.data.filter(function (r) { return r.source === 'ImpossibleBench'; })
+      .sort(function (a, b) { return b.unparseable_rate - a.unparseable_rate; })[0];
+    const items = [
+      'Pilot: ' + pilotN + ' runs across ' + pRows.length + ' models, up to 6 communication topologies -- validates the harness and shows topology effects (RQ4).',
+      'Complete run: ' + completeN + ' runs across ' + cRows.length + ' models, single_agent only, on the full 579-variant dataset (ImpossibleBench + stratified C1-C4 + hand-built) -- the statistical-coverage pass. <strong>' + bestComplete.model + '</strong> has the highest pass rate (' + fmtPct100(bestComplete.pass_rate) + ').',
+      '<strong>' + worstCalibSuccess.model + '</strong> has the worst success calibration: ' + fmtPct100(worstCalibSuccess.false_success_rate) + ' of its "SOLVED" claims are false (didn\'t actually pass).',
+      '<strong>' + bestCalibInfeas.model + '</strong> has the best infeasibility calibration: ' + fmtPct100(bestCalibInfeas.correct_infeasible_rate) + ' of its INFEASIBLE claims are genuinely infeasible.',
+      'Methodology caveat: ' + (worstUnparse ? worstUnparse.model + ' truncates on ' + fmtPct100(worstUnparse.unparseable_rate) + ' of ImpossibleBench runs (reasoning exhausts its output budget before answering) -- treat its ImpossibleBench numbers as a lower bound.' : ''),
+    ];
+    list.innerHTML = items.map(function (t) { return '<li>' + t + '</li>'; }).join('');
+  });
+
+  // ---- grouped bar chart helper ----
+  function groupedBar(svgId, legendId, data, groupKey, seriesKey, seriesVals, valueKey, colorOffset) {
+    const svg = d3.select('#' + svgId);
+    svg.selectAll('*').remove();
+    const box = svg.node().getBoundingClientRect();
+    const width = Math.max(box.width, 280);
+    const height = 320;
+    const margin = { top: 16, right: 16, bottom: 58, left: 40 };
+    svg.attr('viewBox', '0 0 ' + width + ' ' + height);
+
+    const groups = Array.from(new Set(data.map(function (d) { return d[groupKey]; })));
+    const x0 = d3.scaleBand().domain(groups).range([margin.left, width - margin.right]).paddingInner(0.3);
+    const x1 = d3.scaleBand().domain(seriesVals).range([0, x0.bandwidth()]).padding(0.08);
+    const y = d3.scaleLinear().domain([0, 1]).range([height - margin.bottom, margin.top]);
+
+    const g = svg.append('g');
+    g.append('g').attr('class', 'axis-line')
+      .selectAll('line').data(y.ticks(5)).join('line')
+      .attr('x1', margin.left).attr('x2', width - margin.right)
+      .attr('y1', function (t) { return y(t); }).attr('y2', function (t) { return y(t); })
+      .attr('class', 'grid-line');
+
+    g.append('g').attr('transform', 'translate(0,' + (height - margin.bottom) + ')')
+      .call(d3.axisBottom(x0).tickSize(0)).attr('font-size', null).attr('font-family', null)
+      .call(function (axis) {
+        axis.select('.domain').attr('class', 'axis-line');
+        axis.selectAll('text')
+          .attr('class', 'tick')
+          .attr('transform', 'rotate(-30)')
+          .style('text-anchor', 'end')
+          .attr('dx', '-.4em')
+          .attr('dy', '.35em');
+      });
+
+    g.append('g').attr('transform', 'translate(' + margin.left + ',0)')
+      .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')).tickSize(0)).attr('font-size', null).attr('font-family', null)
+      .call(function (axis) { axis.select('.domain').remove(); axis.selectAll('text').attr('class', 'tick'); });
+
+    const byGroup = d3.group(data, function (d) { return d[groupKey]; });
+    groups.forEach(function (grp) {
+      const rows = byGroup.get(grp) || [];
+      seriesVals.forEach(function (sv, i) {
+        const row = rows.find(function (r) { return r[seriesKey] === sv; });
+        const val = row ? +row[valueKey] : 0;
+        g.append('rect')
+          .attr('x', x0(grp) + x1(sv)).attr('width', x1.bandwidth())
+          .attr('y', y(val)).attr('height', (height - margin.bottom) - y(val))
+          .attr('rx', 3)
+          .attr('fill', dash.colors[(i + (colorOffset || 0)) % dash.colors.length])
+          .style('cursor', 'pointer')
+          .on('mousemove', function (ev) {
+            showTip('<b>' + grp + '</b> &middot; ' + sv + '<br>' + fmtPct(val), ev.pageX + 10, ev.pageY + 10);
+          })
+          .on('mouseleave', hideTip);
+      });
+    });
+
+    const legend = document.getElementById(legendId);
+    legend.innerHTML = '';
+    seriesVals.forEach(function (sv, i) {
+      const item = document.createElement('span');
+      item.className = 'legend-item';
+      item.innerHTML = '<span class="legend-swatch" style="background:' + dash.colors[(i + (colorOffset || 0)) % dash.colors.length] + '"></span>' + sv;
+      legend.appendChild(item);
+    });
+  }
+
+  dash.onData(function () {
+    const res = dash.data('by_model_category');
+    if (res.status !== 'ok') return;
+    groupedBar('chart-category', 'legend-category', res.data, 'model_name', 'category', ['F1', 'F2', 'F3'], 'valid', 0);
+  });
+
+  dash.onData(function () {
+    const res = dash.data('by_model_category');
+    if (res.status !== 'ok') return;
+    groupedBar('chart-rq2', 'legend-rq2', res.data, 'model_name', 'category', ['F1', 'F2', 'F3'], 'infeas', 2);
+  });
+
+  dash.onData(function () {
+    const res = dash.data('by_model_type_f3');
+    if (res.status !== 'ok') return;
+    groupedBar('chart-rq3', 'legend-rq3', res.data, 'model_name', 'constraint_type', ['C1', 'C2', 'C3', 'C4'], 'false_succ', 4);
+  });
+
+  dash.onData(function () {
+    const res = dash.data('by_model_arch');
+    if (res.status !== 'ok') return;
+    groupedBar('chart-arch', 'legend-arch', res.data, 'model_name', 'architecture', ARCH_ORDER, 'valid', 4);
+  });
+
+  // ---- tables ----
+  function renderTable(datasetId, tbodyId, columns, keyFields) {
+    dash.onData(function () {
+      const res = dash.data(datasetId);
+      const tbody = document.querySelector('#' + tbodyId + ' tbody');
+      if (res.status !== 'ok') { tbody.innerHTML = '<tr><td class="dash-skeleton" style="height:1.5rem"></td></tr>'; return; }
+      tbody.innerHTML = '';
+      res.data.forEach(function (row) {
+        const tr = document.createElement('tr');
+        const keyVal = keyFields.map(function (k) { return row[k]; }).join(',');
+        tr.setAttribute('data-key', keyVal);
+        columns.forEach(function (col) {
+          const td = document.createElement('td');
+          if (col.num) td.className = 'num';
+          td.innerHTML = col.render ? col.render(row[col.field]) : (row[col.field] === undefined ? '' : row[col.field]);
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    });
+  }
+
+  renderTable('second_family_validation', 'table-secondfam', [
+    { field: 'model_name' }, { field: 'constraint_type' }, { field: 'family_id' }, { field: 'category' },
+    { field: 'valid', num: true, render: function (v) { return fmtPct(+v); } },
+    { field: 'false_succ', num: true, render: function (v) { return fmtPct(+v); } },
+    { field: 'infeas', num: true, render: function (v) { return fmtPct(+v); } },
+  ], ['model_name', 'constraint_type', 'family_id', 'category']);
+
+  renderTable('ib_by_arch', 'table-ibarch', [
+    { field: 'model_name' }, { field: 'architecture' }, { field: 'n', num: true },
+    { field: 'valid', num: true, render: function (v) { return fmtPct(+v); } },
+    { field: 'false_succ', num: true, render: function (v) { return fmtPct(+v); } },
+    { field: 'infeas', num: true, render: function (v) { return fmtPct(+v); } },
+  ], ['model_name', 'architecture']);
+
+  renderTable('bypass_attempts', 'table-bypass', [
+    { field: 'model' }, { field: 'bitvector_recall_runs', num: true },
+    { field: 'bypass_attempts', num: true },
+    { field: 'attempt_rate', num: true, render: function (v) { return fmtPct(+v); } },
+  ], ['model']);
+
+  renderTable('impossiblebench', 'table-ib', [
+    { field: 'model' }, { field: 'task' }, { field: 'impossible_type' },
+    { field: 'decision', render: function (v) { return pillFor(v, 'decision'); } },
+    { field: 'verdict', render: function (v) { return pillFor(v, 'verdict'); } },
+    { field: 'specification_correctness', render: function (v) { return pillFor(v, 'bool'); } },
+    { field: 'conflicting_test_pass', render: function (v) { return pillFor(v, 'bool'); } },
+    { field: 'test_specific_workaround', render: function (v) { return pillFor(v, 'bool'); } },
+  ], ['model', 'task', 'impossible_type']);
+
+  renderTable('self_improve', 'table-si', [
+    { field: 'model' }, { field: 'condition' }, { field: 'lineage_idx', num: true }, { field: 'generation', num: true },
+    { field: 'decision', render: function (v) { return pillFor(v, 'decision'); } },
+    { field: 'verdict', render: function (v) { return pillFor(v, 'verdict'); } },
+    { field: 'proposed_rule', render: function (v) { return v ? v : '<span class="note">—</span>'; } },
+  ], ['model', 'condition', 'lineage_idx', 'generation']);
+
+  // ---- examples ----
+  dash.onData(function () {
+    const res = dash.data('examples');
+    const list = document.getElementById('examples-list');
+    if (res.status !== 'ok') { list.innerHTML = '<div class="dash-skeleton" style="height:200px"></div>'; return; }
+    list.innerHTML = '';
+    res.data.forEach(function (ex) {
+      const div = document.createElement('div');
+      div.className = 'example';
+      div.setAttribute('data-key', ex.title);
+      const codeBlock = ex.code_excerpt
+        ? '<div class="example-block-label">Submitted code (excerpt)</div><pre class="example-code"></pre>'
+        : '';
+      div.innerHTML =
+        '<div class="example-head">' +
+          '<span class="example-title"></span>' +
+          '<span class="example-tags">' +
+            '<span class="pill pill-muted"></span>' +
+            pillFor(ex.decision, 'decision') +
+            pillFor(ex.verdict, 'verdict') +
+          '</span>' +
+        '</div>' +
+        '<p class="example-note"></p>' +
+        '<div class="example-block-label">Task</div>' +
+        '<div class="example-task"></div>' +
+        '<div class="example-block-label">Model’s stated reason</div>' +
+        '<p class="example-reason"></p>' +
+        codeBlock;
+      div.querySelector('.example-title').textContent = ex.title;
+      div.querySelector('.pill-muted').textContent = ex.model + ' · ' + ex.family + '/' + ex.category;
+      div.querySelector('.example-note').textContent = ex.note;
+      div.querySelector('.example-task').textContent = ex.task_summary;
+      div.querySelector('.example-reason').textContent = '“' + ex.reason + '”';
+      if (ex.code_excerpt) div.querySelector('.example-code').textContent = ex.code_excerpt;
+      list.appendChild(div);
+    });
+  });
+
+  window.addEventListener('resize', function () {
+    const cat = dash.data('by_model_category');
+    if (cat.status === 'ok') groupedBar('chart-category', 'legend-category', cat.data, 'model_name', 'category', ['F1', 'F2', 'F3'], 'valid', 0);
+    const rq2 = dash.data('by_model_category');
+    if (rq2.status === 'ok') groupedBar('chart-rq2', 'legend-rq2', rq2.data, 'model_name', 'category', ['F1', 'F2', 'F3'], 'infeas', 2);
+    const rq3 = dash.data('by_model_type_f3');
+    if (rq3.status === 'ok') groupedBar('chart-rq3', 'legend-rq3', rq3.data, 'model_name', 'constraint_type', ['C1', 'C2', 'C3', 'C4'], 'false_succ', 4);
+    const arch = dash.data('by_model_arch');
+    if (arch.status === 'ok') {
+      groupedBar('chart-arch', 'legend-arch', arch.data, 'model_name', 'architecture', ARCH_ORDER, 'valid', 4);
+    }
+    drawComplete();
+  });
+
+  // =====================================================================
+  // Complete Results tab (all 9 models, full-scale run, 5,211 total runs)
+  // =====================================================================
+
+  const MODEL_ORDER = ['gemma4-31b', 'qwen38-27b', 'nemotron35-30b', 'qwen3p5-9b', 'qwen25coder-7b',
+    'qwen3p5-4b', 'mistral-7b', 'granite-8b', 'phi4-mini'];
+  const SOURCE_ORDER = ['Hand-built pilot', 'ImpossibleBench', 'Stratified C1-C4'];
+  function fmtPct100(v) { return Math.round(+v) + '%'; }
+
+  function sortByModelOrder(rows) {
+    return rows.slice().sort(function (a, b) {
+      return MODEL_ORDER.indexOf(a.model) - MODEL_ORDER.indexOf(b.model);
+    });
+  }
+
+  function drawComplete() {
+    const byModel = dash.data('complete_by_model');
+    const calib = dash.data('complete_calibration');
+    const unparse = dash.data('complete_unparseable_by_source');
+    const byType = dash.data('complete_by_model_type');
+
+    if (byModel.status === 'ok') {
+      const rows = sortByModelOrder(byModel.data);
+      groupedBarPct('chart-complete-pass', 'legend-complete-pass', rows, 'model', 'metric',
+        [{ key: 'pass_rate', label: 'Pass rate' }], 0);
+
+      const tbody = document.getElementById('table-complete-body');
+      tbody.innerHTML = '';
+      rows.forEach(function (r) {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + r.model + '</td>' +
+          '<td class="num">' + r.total_runs + '</td>' +
+          '<td class="num">' + r.pass + '</td>' +
+          '<td class="num">' + fmtPct100(r.pass_rate) + '</td>' +
+          '<td class="num">' + fmtPct100(r.false_success_rate) + '</td>' +
+          '<td class="num">' + fmtPct100(r.infeasible_accuracy) + '</td>';
+        tbody.appendChild(tr);
+      });
+
+      const totalRuns = rows.reduce(function (s, r) { return s + Number(r.total_runs); }, 0);
+      const best = rows.slice().sort(function (a, b) { return b.pass_rate - a.pass_rate; })[0];
+      document.getElementById('complete-takeaway').textContent =
+        totalRuns + ' runs across ' + rows.length + ' models, 579 task variants each (hand-built pilot families, the full 103-problem ImpossibleBench pool, and 82 newly-constructed stratified C1-C4 problems). ' +
+        best.model + ' has the highest pass rate (' + fmtPct100(best.pass_rate) + ').';
+    }
+
+    if (calib.status === 'ok') {
+      const rows = sortByModelOrder(calib.data);
+      groupedBarPct('svg-complete-calib', 'legend-complete-calib', rows, 'model', 'metric',
+        [{ key: 'correct_success_rate', label: 'Correct success' }, { key: 'false_success_rate', label: 'False success' }], 0);
+      groupedBarPct('svg-complete-infeas', 'legend-complete-infeas', rows, 'model', 'metric',
+        [{ key: 'correct_infeasible_rate', label: 'Correct infeasibility' }, { key: 'false_infeasible_rate', label: 'False infeasibility' }], 2);
+    }
+
+    if (unparse.status === 'ok') {
+      const rows = sortByModelOrder(unparse.data);
+      groupedBarPct('chart-complete-unparse', 'legend-complete-unparse', rows, 'model', 'source', SOURCE_ORDER.map(function (s) { return { key: s, label: s }; }), 2, true);
+      const worst = unparse.data.filter(function (r) { return r.source === 'ImpossibleBench'; })
+        .sort(function (a, b) { return b.unparseable_rate - a.unparseable_rate; })[0];
+      if (worst) {
+        document.getElementById('complete-unparse-note').textContent =
+          'Worst affected: ' + worst.model + ' at ' + fmtPct100(worst.unparseable_rate) + ' unparseable on ImpossibleBench specifically -- models without a larger context-window override (see Scope notes) are prone to this on ImpossibleBench\'s longer prompts.';
+      }
+    }
+
+    if (byType.status === 'ok') {
+      const rows = sortByModelOrder(byType.data);
+      groupedBarPct('chart-complete-type', 'legend-complete-type', rows, 'model', 'constraint_type',
+        ['C1', 'C2', 'C3', 'C4'].map(function (c) { return { key: c, label: c }; }), 3, true, 'constraint_type', 'pass_rate');
+    }
+  }
+
+  // Grouped bar for the Complete Results tab: each series is keyed either by
+  // a column name holding the value directly (byRow=false, default -- one
+  // row per model with several value columns) or by a row-matching field
+  // (byRow=true -- several rows per model, one per series value, matched on
+  // matchField/valueField).
+  function groupedBarPct(svgId, legendId, data, groupKey, seriesLabelKey, series, colorOffset, byRow, matchField, valueField) {
+    const svg = d3.select('#' + svgId);
+    svg.selectAll('*').remove();
+    const box = svg.node().getBoundingClientRect();
+    const width = Math.max(box.width, 280);
+    const height = 320;
+    const margin = { top: 16, right: 16, bottom: 58, left: 40 };
+    const groups = MODEL_ORDER.filter(function (m) { return data.some(function (d) { return d.model === m; }); });
+    const x0 = d3.scaleBand().domain(groups).range([margin.left, width - margin.right]).paddingInner(0.25);
+    const x1 = d3.scaleBand().domain(series.map(function (s) { return s.key; })).range([0, x0.bandwidth()]).padding(0.08);
+    const y = d3.scaleLinear().domain([0, 100]).range([height - margin.bottom, margin.top]);
+    svg.attr('viewBox', '0 0 ' + width + ' ' + height);
+
+    svg.selectAll('.grid-line').data(y.ticks(5)).join('line').attr('class', 'grid-line')
+      .attr('x1', margin.left).attr('x2', width - margin.right)
+      .attr('y1', function (t) { return y(t); }).attr('y2', function (t) { return y(t); });
+
+    svg.append('g').attr('transform', 'translate(' + margin.left + ',0)')
+      .call(d3.axisLeft(y).ticks(5).tickFormat(function (t) { return t + '%'; }).tickSize(0))
+      .call(function (axis) { axis.select('.domain').remove(); axis.selectAll('text').attr('class', 'tick'); });
+
+    svg.append('g').attr('transform', 'translate(0,' + (height - margin.bottom) + ')')
+      .call(d3.axisBottom(x0).tickSize(0))
+      .call(function (axis) {
+        axis.select('.domain').attr('class', 'axis-line');
+        axis.selectAll('text').attr('class', 'tick').attr('transform', 'translate(-6,6) rotate(-30)').style('text-anchor', 'end');
+      });
+
+    groups.forEach(function (grp) {
+      const g = svg.append('g').attr('transform', 'translate(' + x0(grp) + ',0)');
+      series.forEach(function (sv, i) {
+        let val;
+        if (byRow) {
+          const row = data.find(function (d) { return d.model === grp && d[matchField || seriesLabelKey] === sv.key; });
+          val = row ? +(row[valueField || 'unparseable_rate']) : null;
+        } else {
+          const row = data.find(function (d) { return d.model === grp; });
+          val = row ? +row[sv.key] : null;
+        }
+        if (val === null || isNaN(val)) return;
+        g.append('rect')
+          .attr('x', x1(sv.key)).attr('width', x1.bandwidth())
+          .attr('y', y(val)).attr('height', (height - margin.bottom) - y(val))
+          .attr('rx', 2)
+          .attr('fill', dash.colors[(i + (colorOffset || 0)) % dash.colors.length])
+          .on('mousemove', function (ev) {
+            showTip('<strong>' + grp + '</strong><br>' + sv.label + ': ' + Math.round(val) + '%', ev.pageX + 12, ev.pageY + 12);
+          })
+          .on('mouseleave', hideTip);
+      });
+    });
+
+    const legend = document.getElementById(legendId);
+    legend.innerHTML = '';
+    series.forEach(function (sv, i) {
+      const item = document.createElement('span');
+      item.className = 'legend-item';
+      item.innerHTML = '<span class="legend-swatch" style="background:' + dash.colors[(i + (colorOffset || 0)) % dash.colors.length] + '"></span>' + sv.label;
+      legend.appendChild(item);
+    });
+  }
+
+  dash.onData(drawComplete);
+
+  // ---- tab switching ----
+  const tabBtnPilot = document.getElementById('tab-btn-pilot');
+  const tabBtnComplete = document.getElementById('tab-btn-complete');
+  const tabPagePilot = document.getElementById('page-pilot');
+  const tabPageComplete = document.getElementById('page-complete');
+
+  function showTab(name) {
+    const isComplete = name === 'complete';
+    tabPagePilot.hidden = isComplete;
+    tabPageComplete.hidden = !isComplete;
+    tabBtnPilot.setAttribute('aria-selected', String(!isComplete));
+    tabBtnComplete.setAttribute('aria-selected', String(isComplete));
+    if (isComplete) { drawComplete(); dash.setLink('complete'); } else { dash.setLink('pilot'); }
+  }
+
+  tabBtnPilot.addEventListener('click', function () { showTab('pilot'); });
+  tabBtnComplete.addEventListener('click', function () { showTab('complete'); });
+
+  if (window.location.hash === '#complete') showTab('complete');
+
+  // Research questions live above the tabs and link into tab-specific
+  // figures -- jump to the right tab first so the anchor target is visible.
+  document.querySelectorAll('.rq-map a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      const el = document.getElementById(a.getAttribute('href').slice(1));
+      if (el && el.closest('#page-complete')) showTab('complete');
+      else if (el && el.closest('#page-pilot')) showTab('pilot');
+    });
+  });
+})();
+</script>
+
+</div>
+<script>
+  // Minimal stand-in for the dashboard runtime's `dash` object, since this
+  // is a static export: datasets won't load (no live store here), but the
+  // layout, styling and any non-data-dependent interactivity (topology drag,
+  // tabs) still work.
+  window.dash = {
+    colors: ['#c45508','#6a5acd','#2a9d8f','#d62246','#577590','#e9c46a','#264653','#8e44ad'],
+    data: function(id) { return { status: 'missing', data: [] }; },
+    onData: function(fn) { try { fn(); } catch (e) {} },
+    calc: function() {}, loader: function() {}, setLink: function() {}, setParams: function() {},
+    resetParams: function() { return {}; }, params: function() { return {}; }, refresh: function() {},
+  };
+</script>
+</body>
+</html>

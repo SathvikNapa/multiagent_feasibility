@@ -1,0 +1,11 @@
+models:
+  gemma4-31b:
+    api_key: pilot-local-key
+    base_url: http://e01:8808/v1
+    served_model_name: gemma4-31b
+    thinking_mode: false
+  nemotron35-30b:
+    api_key: pilot-local-key
+    base_url: http://e01:8809/v1
+    served_model_name: nemotron35-30b
+    thinking_mode: false

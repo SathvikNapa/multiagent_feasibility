@@ -1,0 +1,9 @@
+constraint_type,architecture,n,valid_success,false_success,infeasible_claim_on_F3
+C1,single_agent,18,0.28,0.39,0.33
+C1,team4_aggregator,18,0.11,0.56,0.33
+C2,single_agent,18,0.39,0.11,0.83
+C2,team4_aggregator,18,0.28,0.17,0.83
+C3,single_agent,18,0.33,0.22,0.67
+C3,team4_aggregator,18,0.28,0.33,0.67
+C4,single_agent,18,0.33,0.06,0.67
+C4,team4_aggregator,18,0.44,0.0,0.67

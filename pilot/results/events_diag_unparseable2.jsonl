@@ -1,0 +1,9 @@
+{"run_id": "ordered_sort_pairs_F1__qwen3p5-4b__single_agent__r0", "kind": "termination", "payload": {"verdict": "PASS", "decision": "SOLVED"}}
+{"run_id": "ordered_sort_pairs_F1__qwen3p5-4b__single_agent__r1", "kind": "termination", "payload": {"verdict": "PASS", "decision": "SOLVED"}}
+{"run_id": "ordered_sort_pairs_F1__qwen3p5-4b__single_agent__r2", "kind": "termination", "payload": {"verdict": "PASS", "decision": "SOLVED"}}
+{"run_id": "ordered_sort_pairs_F2__qwen3p5-4b__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ordered_sort_pairs_F2__qwen3p5-4b__single_agent__r1", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ordered_sort_pairs_F2__qwen3p5-4b__single_agent__r2", "kind": "termination", "payload": {"verdict": "NO_SUBMISSION", "decision": "INFEASIBLE"}}
+{"run_id": "ordered_sort_pairs_F3__qwen3p5-4b__single_agent__r0", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ordered_sort_pairs_F3__qwen3p5-4b__single_agent__r1", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
+{"run_id": "ordered_sort_pairs_F3__qwen3p5-4b__single_agent__r2", "kind": "termination", "payload": {"verdict": "WRONG_ANSWER", "decision": "SOLVED"}}
